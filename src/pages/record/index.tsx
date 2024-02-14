@@ -70,7 +70,6 @@ const RecordIndex = () => {
         <PageContainer>
             <h1>이전 게임 결과 보기</h1>
             {renderFinalBoardState()}
-            {/* <div>{renderGameHistory()}</div> */}
             <Link href="/">
                 <Button>홈으로 돌아가기</Button>
             </Link>
@@ -92,8 +91,8 @@ const GameBoard = styled.div<{ size: number }>`
   display: grid;
   grid-template-columns: repeat(${props => props.size}, 1fr);
   gap: 5px;
-  width: 80vw; // 게임 보드의 너비를 화면의 80%로 설정
-  max-width: 500px; // 게임 보드의 최대 너비를 제한
+  width: 80vw;
+  max-width: 500px;
 `;
 
 const GameCell = styled.div<{ color: string }>`
@@ -130,5 +129,5 @@ const Button = styled.button`
     background-color: #0056b3;
     transform: scale(1.05);
   }
-  margin-top: 20px; // 버튼과 게임 보드 사이의 간격을 추가
+  margin-top: 20px;
 `;

@@ -57,10 +57,10 @@ const bounce = keyframes`
   }
 `;
 const StartGameButton = styled(Button)`
-  background-color: #28a745; // "게임 시작" 버튼의 배경색 변경
+  background-color: #28a745;
   &:hover {
-    background-color: #218838; // 호버 시 배경색 변경
-    border-color: #fff; // 호버 시 테두리색 변경
+    background-color: #218838;
+    border-color: #fff; 
   }
-  animation: ${bounce} 1s infinite alternate; // 애니메이션 적용
+  animation: ${bounce} 1s infinite alternate; 
 `;
