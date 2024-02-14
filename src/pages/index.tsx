@@ -5,6 +5,7 @@ export default function Home() {
   return (
     <>
       <main>
+        <div>commit test</div>
         <Container>
           <Link href="/setup" passHref>
             <Button>게임 시작</Button>
