@@ -2,14 +2,7 @@ import React from "react";
 import styled from "@emotion/styled";
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
-
-interface GameSettings {
-    boardSize: number;
-    winCondition: number;
-    player1: { mark: string, color: string };
-    player2: { mark: string, color: string };
-    firstPlayer: 'player1' | 'player2' | 'random';
-}
+import { GameSettings } from '@/types';
 
 const initialSettings: GameSettings = {
     boardSize: 3,
@@ -51,6 +44,7 @@ const SetupIndex = () => {
         router.push('/game');
     }
 
+    // 메인 렌더링 로직 ===================================================================================
     return (
         <Container>
             <Title>게임설정</Title>
@@ -104,7 +98,6 @@ const SetupIndex = () => {
 
             <ButtonWrapper>
                 <StyledButton onClick={saveSettingsAndStartGame}>게임 시작</StyledButton>
-                <StyledButton onClick={() => console.log(settings)}>설정 저장</StyledButton>
             </ButtonWrapper>
         </Container>
     );

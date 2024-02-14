@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styled from '@emotion/styled';
+import { keyframes } from "@emotion/react";
 
 export default function Home() {
   return (
@@ -7,9 +8,9 @@ export default function Home() {
       <main>
         <Container>
           <Link href="/setup" passHref>
-            <Button>게임 시작</Button>
+            <StartGameButton>게임 시작</StartGameButton>
           </Link>
-          <Link href="/records" passHref>
+          <Link href="/record" passHref>
             <Button className="record">저장된 게임</Button>
           </Link>
         </Container>
@@ -46,4 +47,20 @@ const Button = styled.button`
       background-color: #218838; 
     }
   }
+`;
+const bounce = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+`;
+const StartGameButton = styled(Button)`
+  background-color: #28a745; // "게임 시작" 버튼의 배경색 변경
+  &:hover {
+    background-color: #218838; // 호버 시 배경색 변경
+    border-color: #fff; // 호버 시 테두리색 변경
+  }
+  animation: ${bounce} 1s infinite alternate; // 애니메이션 적용
 `;

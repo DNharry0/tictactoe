@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "@emotion/styled";
+import { keyframes } from "@emotion/react";
 import Link from "next/link";
-
-interface GameSettings {
-    boardSize: number;
-    winCondition: number;
-    player1: { mark: string, color: string };
-    player2: { mark: string, color: string };
-    firstPlayer: 'player1' | 'player2' | 'random';
-}
+import { GameSettings } from '@/types';
 
 const GameIndex = () => {
     const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
@@ -18,6 +12,7 @@ const GameIndex = () => {
     const [player1, setPlayer1] = useState({ mark: 'X', color: '#0000FF', undoCount: 3 });
     const [player2, setPlayer2] = useState({ mark: 'O', color: '#FF0000', undoCount: 3 });
     const [gameHistory, setGameHistory] = useState<(string | null)[][][]>([]);
+    const [moveOrder, setMoveOrder] = useState<(number | null)[][]>([]);
 
     useEffect(() => {
         const settings = localStorage.getItem('gameSettings');
@@ -36,6 +31,20 @@ const GameIndex = () => {
         }
     }, []);
 
+    useEffect(() => {
+        if (gameSettings) {
+            const { player1: settingsPlayer1, player2: settingsPlayer2 } = gameSettings;
+            setPlayer1(prev => ({ ...prev, mark: settingsPlayer1.mark, color: settingsPlayer1.color }));
+            setPlayer2(prev => ({ ...prev, mark: settingsPlayer2.mark, color: settingsPlayer2.color }));
+        }
+    }, [gameSettings]);
+
+    useEffect(() => {
+        const initialMoveOrder = Array(gameSettings?.boardSize).fill(null).map(() => Array(gameSettings?.boardSize).fill(null));
+        setMoveOrder(initialMoveOrder);
+    }, [gameSettings]);
+
+    // 게임 로직 처리 =======================================================================================
     const handleClick = (row: number, col: number) => {
         if (board[row][col] || winner) return;
         const newBoard = board.map(row => [...row]);
@@ -46,6 +55,10 @@ const GameIndex = () => {
 
         if (!winner) checkForDraw(newBoard);
         setCurrentTurn(currentTurn === 'player1' ? 'player2' : 'player1');
+
+        const newMoveOrder = [...moveOrder];
+        newMoveOrder[row][col] = gameHistory.length;
+        setMoveOrder(newMoveOrder);
     };
 
     const checkForWinner = (board: (string | null)[][], row: number, col: number) => {
@@ -93,21 +106,6 @@ const GameIndex = () => {
         setGameHistory([...gameHistory, board]);
     };
 
-    useEffect(() => {
-        if (winner) {
-            handleGameOver();
-        }
-    })
-
-    const handleGameOver = () => {
-        if (winner) {
-            localStorage.setItem('gameHistory', JSON.stringify(gameHistory));
-            alert(`게임 종료! 승자: ${winner}`);
-        }
-    };
-
-    if (!gameSettings) return <div>게임 설정을 불러올 수 없습니다.</div>;
-
     const checkForDraw = (board: (string | null)[][]) => {
         const isDraw = board.every(row => row.every(cell => cell !== null));
         if (isDraw) {
@@ -133,6 +131,20 @@ const GameIndex = () => {
         }
     };
 
+    const handleGameOver = () => {
+        if (winner) {
+            localStorage.setItem('gameHistory', JSON.stringify(gameHistory));
+            localStorage.setItem('finalBoardState', JSON.stringify(board));
+        }
+    };
+
+    useEffect(() => {
+        if (winner) {
+            handleGameOver();
+        }
+    })
+
+    // 렌더링 관련 함수(시작)====================================================================================
     const renderGameBoard = () => {
         return (
             <GameBoard size={gameSettings?.boardSize || 3}>
@@ -141,9 +153,9 @@ const GameIndex = () => {
                         <GameCell
                             key={`${rowIndex}-${colIndex}`}
                             color={cell ? (cell === player1.mark ? player1.color : player2.color) : 'transparent'}
-                            onClick={() => handleClick(rowIndex, colIndex)}
+                            onClick={() => winner ? null : handleClick(rowIndex, colIndex)}
                         >
-                            {cell}
+                            {cell && `${cell} (${(moveOrder[rowIndex]?.[colIndex] ?? -0) + 0})`}
                         </GameCell>
                     ))
                 )}
@@ -155,24 +167,33 @@ const GameIndex = () => {
         const currentPlayer = currentTurn === 'player1' ? player1 : player2;
         return (
             <div>
-                <p>현재 플레이어: {currentPlayer.mark} ({currentPlayer.color})</p>
+                <p>현재 플레이어 차례: <span>{currentPlayer.mark}</span> <ColorIndicator color={currentPlayer.color} /></p>
                 <p>남은 무르기 횟수: {currentPlayer.undoCount}회</p>
                 {winner === null && (
-                    <button disabled={currentPlayer.undoCount <= 0} onClick={handleUndo}>무르기</button>
+                    <BackButton disabled={currentPlayer.undoCount <= 0} onClick={handleUndo}>무르기</BackButton>
                 )}
             </div>
         );
     };
+    // 렌더링 관련 함수(끝)====================================================================================
+
+
+    //메인 렌더링 로직 =======================================================================================
+    if (!gameSettings) return <div>게임 설정을 불러올 수 없습니다.</div>;
 
     return (
         <PageContainer>
             <h1>게임 페이지</h1>
             {renderPlayerInfo()}
-            {winner ? <p>승자: {winner}</p> : (
-                <GameBoardWrapper>
-                    {renderGameBoard()}
-                </GameBoardWrapper>
-            )}
+            {winner ?
+                <Result>{winner === '무승부' ? '무승부' : `${winner} 승리`}</Result>
+                :
+                null
+            }
+
+            <GameBoardWrapper>
+                {renderGameBoard()}
+            </GameBoardWrapper>
 
             <Link href="/" passHref>
                 <HomeButton>홈으로</HomeButton>
@@ -196,8 +217,12 @@ const GameBoard = styled.div<{ size: number }>`
   align-items: center;
 `;
 const GameCell = styled.button<{ color: string }>`
-  width: 10vw; 
-  height: 10vw;
+  width: 20vw; 
+  height: 20vw;
+  min-width: 70px;
+  min-height: 70px;
+  max-width: 100px;
+  max-height: 100px;
   background-color: ${props => props.color || '#f0f0f0'};
   display: flex;
   justify-content: center;
@@ -205,11 +230,6 @@ const GameCell = styled.button<{ color: string }>`
   font-size: 24px;
   border: 1px solid #131111; 
   cursor: pointer;
-
-  @media (max-width: 600px) {
-    width: 20vw;
-    height: 20vw;
-  }
 `;
 const PageContainer = styled.div`
   display: flex;
@@ -231,4 +251,52 @@ const HomeButton = styled.button`
   &:hover {
     background-color: #0056b3;
   }
+`;
+const bounce = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+`;
+const Result = styled.h2`
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #4CAF50; 
+    color: white;
+    font-size: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    animation: ${bounce} 1s infinite alternate; 
+
+    &:hover {
+        transform: translateY(-5px);
+    }
+`;
+const BackButton = styled.button`
+    padding: 10px 20px;
+    background-color: #0070f3; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-top: 20px;
+    
+    &:hover {
+        background-color: #0056b3;
+    }
+    &:disabled {
+        background-color: #ccc; 
+        cursor: not-allowed;
+    }
+`;
+const ColorIndicator = styled.div<{ color: string }>`
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  background-color: ${props => props.color};
+  margin-left: 5px;
 `;
