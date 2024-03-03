@@ -167,7 +167,7 @@ const GameIndex = () => {
         const currentPlayer = currentTurn === 'player1' ? player1 : player2;
         return (
             <div>
-                <p>현재 플레이어 차례: <span>{currentPlayer.mark}</span> <ColorIndicator color={currentPlayer.color} /></p>
+                <div>현재 플레이어 차례: <span>{currentPlayer.mark}</span> <ColorIndicator color={currentPlayer.color} /></div>
                 <p>남은 무르기 횟수: {currentPlayer.undoCount}회</p>
                 {winner === null && (
                     <BackButton disabled={currentPlayer.undoCount <= 0} onClick={handleUndo}>무르기</BackButton>
@@ -215,6 +215,8 @@ const GameBoard = styled.div<{ size: number }>`
   gap: 5px;
   justify-content: center;
   align-items: center;
+  border: 5px solid #000;
+  padding: 10px;
 `;
 const GameCell = styled.button<{ color: string }>`
   width: 20vw; 
